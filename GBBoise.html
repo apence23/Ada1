@@ -1,520 +1,265 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-  <script src='http://api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.js'></script>
-  <title>Greenbelt</title>
-  <link href='http://api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.css' rel='stylesheet' />
+L.Control.MiniMap = L.Control.extend({
+	options: {
+		position: 'bottomright',
+		toggleDisplay: false,
+		zoomLevelOffset: -5,
+		zoomLevelFixed: false,
+		zoomAnimation: false,
+		autoToggleDisplay: false,
+		width: 150,
+		height: 150
+	},
+	
+	hideText: 'Hide MiniMap',
+	
+	showText: 'Show MiniMap',
+	
+	//layer is the map layer to be shown in the minimap
+	initialize: function (layer, options) {
+		L.Util.setOptions(this, options);
+		this._layer = layer;
+	},
+	
+	onAdd: function (map) {
 
-  <!--[if lte IE 8]>
-    <link href='http://api.tiles.mapbox.com/mapbox.js/v1.3.1/mapbox.ie.css' rel='stylesheet' >
-  <![endif]-->
-  <style>
-    body { margin:0; padding:0; }
-    #map { position:absolute; top:0; bottom:0; width:100%; }
-    a:link {color:#0099ff;}
-    a:visited {color:#00FF00;}
-  </style>
-</head>
-<body>
-<style>
-  #map { position:absolute; top:0; bottom:0; right:300px; left:0; }
-  #info {
-      position:absolute; top: 10px; right: 10px;
-      height: 400px; width: 300px; background:#333; color: #fff;
-      z-index:100; padding:10px; margin:5px; 
-  }
-  h1 { margin-top:0; }
-  
-</style>
+		this._mainMap = map;
 
-
-<div id='map'></div>
-<div id='info'>
-    <h1>Greenbelt Trail System</h1>
-    <div id="note">Click on a symbol to get information about the Greenbelt including access points and amenities including:<br /><br /><li>Parking</li><li>Restrooms</li><li>Picnics Tables and Venues</li></div>
-  
-    </div>
-
-<script type='text/javascript'>
-
-        var map = L.mapbox.map('map', 'alinoxious.map-p1dkmw6b').setView([43.61, -116.19], 13);
-
-        var geoJson = [
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.06205, 43.527579]
-            },
-            properties: {
-                title: 'Lucky Peak State Park and Discovery Park ',
-                description: 'A great place to start on the Greenbelt with plenty of accomodations including a swimming area and a great view of the Lucky Peak Dam.<br><br>Amenities include: <br><li>Restrooms</li><li>Parking{SEASONAL FEE}</li><li>Picnic Tables</li></br> <a href="http://parksandrecreation.idaho.gov/parks/lucky-peak">Lucky Peak State Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.09287, 43.5385938]
-            },
-            properties: {
-                title: 'Diversion Dam',
-                description: 'Diversion Dam has a free parking lot with a cross walk to the Greenbelt.<br><br> Amenities include: <br><li>Parking</li></br> <a href="http://en.wikipedia.org/wiki/Boise_River_Diversion_Dam">Boise River Diversion Dam Webiste</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.09716, 43.5444421]
-            },
-            properties: {
-                title: 'Highway 21 and Warm Springs Ave',
-                description: 'There is a dirt parking lot here with plenty of room to park and with access to the Greenbelt.<br><br> Amenities include: <br><li>Parking {FREE}</li><li>Picnic Tables</li></br>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.10360, 43.5443177]
-            },
-            properties: {
-                title: 'Barber Park Observation Point',
-                description: 'The Park offers a great over look of the Boise River below and the Barber Pool Conservation Area. It is a great place to gain access to the Greenbelt through Surprise Valley.<br><br> Amenities include: <br><li>Parking {FREE}</li></br> <a href="http://parks.cityofboise.org/parks-locations/parks/barber-observation-point/">Barber Park Observation Point Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
+		//Creating the container and stopping events from spilling through to the main map.
+		this._container = L.DomUtil.create('div', 'leaflet-control-minimap');
+		this._container.style.width = this.options.width + 'px';
+		this._container.style.height = this.options.height + 'px';
+		L.DomEvent.disableClickPropagation(this._container);
+		L.DomEvent.on(this._container, 'mousewheel', L.DomEvent.stopPropagation);
 
 
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.11192, 43.5640673]
-            },
-            properties: {
-                title: 'Idaho Department of Parks and Recreation',
-                description: 'The State Parks Deparment offer a public restroom that is right next to the Greenbelt path. There is parking here but it is limited.<br><br> Amenities include: <br><li>Restrooms</li><li>Parking {FREE}</li></br> <a href ="http://parksandrecreation.idaho.gov/">Idaho Department Parks and Recreation Webiste</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.12437, 43.5708460]
-            },
-            properties: {
-                title: 'Warm Springs Road and Old Eckert Road Parking',
-                description: 'This location offers a great place to park and have access to the Greenbelt and parks close by.<br><br> Amenities include: <br><li>Parking {Free}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.13621, 43.5678610]
-            },
-            properties: {
-                title: 'Barber Park',
-                description: 'Barber Park is a great locaiton to start on the Greenbelt. This parks also offers the starting point for floating the Boise River.<br><br> Amenities include: <br><li>Parking {Seasonal FEE}</li><li>Restrooms</li><li>Picnic Tables</li></br> <a href ="http://www.adaweb.net/ParksWaterways/BarberPark.aspx">Barber Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.14351, 43.5742972]
-            },
-            properties: {
-                title: 'Marianne Williams Park',
-                description: 'Marianne Williams Park provides a great starting place to access the Greenbelt. It also provides a great view of the wildlife around the Boise River.<br><br> Amenities include: <br><li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues</li></br> <a href="http://parks.cityofboise.org/parks-locations/parks/marianne-williams-park/">Marianne Williams Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.15295, 43.5765357]
-            },
-            properties: {
-                title: 'Bethine Church River Trail',
-                description: 'This 1.6 mile trail offer a great look into the wildlife along the Boise River in the heart of Boise. Starting at the Cottonwood Apartments off of Parkcenter Blvd the unpaved trail follows the River to the Parkcenter Bridge.<br><br><strong>No bikes are allowed on path</strong></br><br><a href="http://parks.cityofboise.org/parks-locations/parks/bethine-church-river-trail/"> Bethine Church River Trail Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.16531, 43.5826291]
-            },
-            properties: {
-                title: 'Baggley Park',
-                description: 'This 7-acre neighborhood park has many great amenities that include everything from a basketball court, volleyball court and a tennis court. It is a great place to start riding the Greenbelt with access to Barber Park to the East and access to Downtown to the West.<br><br> Amenities include:<br><li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/baggley-park/">Baggley Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-               
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.17046, 43.5950005]
-            },
-            properties: {
-                title: 'Warm Springs Golf Course',
-                description: 'The Greenbelt runs right through the Golf Course giving the trail rider a fun experience. There is a public bathroom located on the Course that is available to Greenbelt users.<br><br> Amenities include:<br><li>Restrooms</li></br><a href="http://www.warmspringsgolfcourse.com/"> Warm Springs Golf Course Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.18350, 43.6026459]
-            },
-            properties: {
-                title: 'Municipal Park',
-                description: 'This city Park offers a great place for huge events with 11 reservable picnic sites, and picnic shelters. The Greenbelt runs right through the Park giving great access to the trail.<br><br> <strong>Dogs are not allowed in the park</strong></br><br> Amenities include:</br><li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/municipal-park/">Municipal Park Webiste</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.20239, 43.6086123]
-            },
-            properties: {
-                title: 'Julia Davis Park',
-                description: 'Julia Davis Park is one of cities Ribbon of Jewels Parks. The Park is home to the city Zoo, Boise Art Museum, Idaho Historical Museum, Discovery Center, and Idaho Black History Museum.<br><br> Amenities include:<li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues and tables</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/julia-davis-park/">Julia Davis Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.22058, 43.6119681]
-            },
-            properties: {
-                title: 'Ann Morrison Park',
-                description: 'Ann Morrison Park is one the Ribbon of Jewels Parks along the Boise River. The Park offers many features including fountains,gardens, sport fields,picnic venues and a Dog Off-Leash Area. <br><br> Amenities include:<li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues and tables</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/ann-morrison-park/">Ann Morrison Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.17647, 43.6013406]
-            },
-            properties: {
-                title: 'Marden Street Parking',
-                description: 'A great place to park for easy access to the Greenbelt. Off of East Warm Springs Ave and Marden Street. <br><br>Amenities include:<li>Parking {FREE}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.18685, 43.5991341]
-            },
-            properties: {
-                title: 'West Parkcenter Blvd Bridge and Beacon Street Parking',
-                description: 'A huge dirt parking lot along side of the W.Parkcenter Blvd Bridge that has easy access to the Greenbelt. <br><br>Amenities include:<li>Parking {FREE}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.20930, 43.6085967]
-            },
-            properties: {
-                title: 'South 9th Street and Royal Blvd Parking',
-                description: 'A secret parking spot hiding in the trees between S.Capitol Blvd and S.9th Street Bridges with easy access to the Greenbelt. <br><br> Amenities include:<li>Parking {FREE}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
+		this._miniMap = new L.Map(this._container,
+		{
+			attributionControl: false,
+			zoomControl: false,
+			zoomAnimation: this.options.zoomAnimation,
+			autoToggleDisplay: this.options.autoToggleDisplay,
+			touchZoom: !this.options.zoomLevelFixed,
+			scrollWheelZoom: !this.options.zoomLevelFixed,
+			doubleClickZoom: !this.options.zoomLevelFixed,
+			boxZoom: !this.options.zoomLevelFixed,
+			crs: map.options.crs
+		});
 
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.22367, 43.6176851]
-            },
-            properties: {
-                title: 'Idaho Fallen Firefighter Memorial',
-                description: 'At this beaudtiful memeorial there is a wall and a bronze statue to remember Idahos fallen firefighters, both career and volunteer. There is parking available here for access to the Greenbelt.<br><br> Amenities include:<li>Parking {FREE}</li><li>Restrooms</li></br><a href="http://www.idahofff.org/">Idaho Fallen Firefighters Foundation</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.23775, 43.6363236]
-            },
-            properties: {
-                title: 'Veterans Memorial Park',
-                description: 'Veterans Memorial Park was built for the State of Idaho, Idahos Veterans, and the general public. Throughout the park there are several memorials, a plaza and playgrounds. Be sure to check out The Patriots Walk that celebrates Idahos Veterans.The park is also a great place to fish the local ponds that are stocked frequently.<br><br>Amenities include:<li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Venues</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/veterans-memorial-park/">Veterans Memorial Park Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.24444, 43.6402680]
-            },
-            properties: {
-                title: 'Lander Street Parking',
-                description: 'Off of West State Steet, Lander Street offers easy access to the Greenbelt and easy parking. <br><br>Amenities include:<li>Parking {FREE}</li><li>Restrooms</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.24586, 43.6432184]
-            },
-            properties: {
-                title: 'Willow Lane Athletic Complex',
-                description: 'Willow Lane is a special use park featuring several softball fields, a soccer field, playground and a BMX dirt jump park.<br><br>Amenities include:<li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Tables</li></br><a href="http://parks.cityofboise.org/parks-locations/parks/willow-lane-athletic-complex/">Willow Lane Athletic Complex Website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.27929, 43.6604829]
-            },
-            properties: {
-                title: 'Glenwood Street Parking',
-                description: 'Right off the Glenwood Bridge this parking lot is a great place to park to access the Greenbelt and the Boise River. <br><br>Amenities include:<li>Parking {FREE}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.28320, 43.6631218]
-            },
-            properties: {
-                title: 'Riverside Park',
-                description: 'Located in Garden City, Riverside Park offers a great opportunity for Greenbelt users to access both Garden City Nature Walking Path and the Greenbelt path, that runs north of the Boise River, that allows bikes.<br><br><strong>No bikes allowed on the Nature Walking Path</strong><br><br>Amenities include:<li>Parking {FREE}</li><li>Restrooms</li><li>Picnic Tables</li></br><a href="http://www.gardencityidaho.org/index.asp?Type=B_BASIC&SEC=%7BB8DB513D-9135-48A9-BFD0-24345A0ACD15%7D&DE=%7B527B6AFC-BF02-4E19-8C5C-4B7E7C9B0AC1%7D">Riverside Park Webiste</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.29963, 43.6670023]
-            },
-            properties: {
-                title: 'Foundation for Ada-Canyon Trail System {FACTS}',
-                description: 'A non-profit collaboration between Ada County and Canyon County, FACTS mission is to close the gap on the Greenbelt along the Boise River. The final goal is to have one continuous trail from Lucky Peak Dam to where the Boise River meets the Snake River. <br><br>To access this trail, start from Glenwood Bridge and stay on the South side of the Boise River Greenbelt path and head west.</br><br><a href="http://factsidaho.org/">Foundation for Ada-Canyon Trails System website</a>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-                
-            }
-        },
-        {
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-116.35422, 43.6847255]
-            },
-            properties: {
-                title: 'West Mace Road Parking',
-                description: 'On the corner of S.Eagle Road and W.Mace Road this parking lot is a great place to start the Greenbelt from end to end. <br><br>Amenities include:<li>Parking {FREE}</li>',
-                'marker-color': '#000',
-                'marker-size': 'small',
-                'marker-symbol': 'marker-stroked'
-            }
-        },
+		this._miniMap.addLayer(this._layer);
 
+		//These bools are used to prevent infinite loops of the two maps notifying each other that they've moved.
+		this._mainMapMoving = false;
+		this._miniMapMoving = false;
 
-    ];
+		//Keep a record of this to prevent auto toggling when the user explicitly doesn't want it.
+		this._userToggledDisplay = false;
+		this._minimized = false;
 
-        var bbbridge = L.circle([43.5981706, -116.17595], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+		if (this.options.toggleDisplay) {
+			this._addToggleButton();
+		}
 
-        bbbridge.bindPopup("Baybrook Bridge");
+		this._miniMap.whenReady(L.Util.bind(function () {
+			this._aimingRect = L.rectangle(this._mainMap.getBounds(), {color: "#ff7800", weight: 1, clickable: false}).addTo(this._miniMap);
+			this._shadowRect = L.rectangle(this._mainMap.getBounds(), {color: "#000000", weight: 1, clickable: false,opacity:0,fillOpacity:0}).addTo(this._miniMap);
+			this._mainMap.on('moveend', this._onMainMapMoved, this);
+			this._mainMap.on('move', this._onMainMapMoving, this);
+			this._miniMap.on('movestart', this._onMiniMapMoveStarted, this);
+			this._miniMap.on('move', this._onMiniMapMoving, this);
+			this._miniMap.on('moveend', this._onMiniMapMoved, this);
+		}, this));
 
-        var bgbridge = L.circle([43.6053805, -116.20359], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+		return this._container;
+	},
 
-        bgbridge.bindPopup("Bob Gibbs Bridge:<br> Connects Julia Davis Park to BSU ");
+	addTo: function (map) {
+		L.Control.prototype.addTo.call(this, map);
+		this._miniMap.setView(this._mainMap.getCenter(), this._decideZoom(true));
+		this._setDisplay(this._decideMinimized());
+		return this;
+	},
 
-        var eightBridge = L.circle([43.6092493, -116.20923], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+	onRemove: function (map) {
+		this._mainMap.off('moveend', this._onMainMapMoved, this);
+		this._mainMap.off('move', this._onMainMapMoving, this);
+		this._miniMap.off('moveend', this._onMiniMapMoved, this);
 
-        eightBridge.bindPopup("8th Street Bridge");
+		this._miniMap.removeLayer(this._layer);
+	},
 
-        var pioneerbridge = L.circle([43.6122167, -116.21715], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+	_addToggleButton: function () {
+		this._toggleDisplayButton = this.options.toggleDisplay ? this._createButton(
+				'', this.hideText, 'leaflet-control-minimap-toggle-display', this._container, this._toggleDisplayButtonClicked, this) : undefined;
+	},
 
-        pioneerbridge.bindPopup("Pioneer Bridge");
+	_createButton: function (html, title, className, container, fn, context) {
+		var link = L.DomUtil.create('a', className, container);
+		link.innerHTML = html;
+		link.href = '#';
+		link.title = title;
 
-        var rrtbridge = L.circle([43.6179647, -116.22694], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+		var stop = L.DomEvent.stopPropagation;
 
-        rrtbridge.bindPopup("Railroad Trestle Bridge");
+		L.DomEvent
+			.on(link, 'click', stop)
+			.on(link, 'mousedown', stop)
+			.on(link, 'dblclick', stop)
+			.on(link, 'click', L.DomEvent.preventDefault)
+			.on(link, 'click', fn, context);
 
-        var thirtySteetBridge = L.circle([43.6264770, -116.23462], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+		return link;
+	},
 
-        thirtySteetBridge.bindPopup("30th Street Bridge: Whitewater Park");
+	_toggleDisplayButtonClicked: function () {
+		this._userToggledDisplay = true;
+		if (!this._minimized) {
+			this._minimize();
+			this._toggleDisplayButton.title = this.showText;
+		}
+		else {
+			this._restore();
+			this._toggleDisplayButton.title = this.hideText;
+		}
+	},
 
-        var gcgbBridgeOne = L.circle([43.6519133, -116.26410], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+	_setDisplay: function (minimize) {
+		if (minimize != this._minimized) {
+			if (!this._minimized) {
+				this._minimize();
+			}
+			else {
+				this._restore();
+			}
+		}
+	},
 
-        gcgbBridgeOne.bindPopup("Garden City Greenbelt Bridge 1: End of City of Boise Greenbelt");
+	_minimize: function () {
+		// hide the minimap
+		if (this.options.toggleDisplay) {
+			this._container.style.width = '19px';
+			this._container.style.height = '19px';
+			this._toggleDisplayButton.className += ' minimized';
+		}
+		else {
+			this._container.style.display = 'none';
+		}
+		this._minimized = true;
+	},
 
-        var gcgbBridgeTwo = L.circle([43.6531243, -116.26822], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+	_restore: function () {
+		if (this.options.toggleDisplay) {
+			this._container.style.width = this.options.width + 'px';
+			this._container.style.height = this.options.height + 'px';
+			this._toggleDisplayButton.className = this._toggleDisplayButton.className
+					.replace(/(?:^|\s)minimized(?!\S)/g, '');
+		}
+		else {
+			this._container.style.display = 'block';
+		}
+		this._minimized = false;
+	},
 
-        gcgbBridgeTwo.bindPopup("Garden City Greenbelt Bridge 2");
+	_onMainMapMoved: function (e) {
+		if (!this._miniMapMoving) {
+			this._mainMapMoving = true;
+			this._miniMap.setView(this._mainMap.getCenter(), this._decideZoom(true));
+			this._setDisplay(this._decideMinimized());
+		} else {
+			this._miniMapMoving = false;
+		}
+		this._aimingRect.setBounds(this._mainMap.getBounds());
+	},
 
-        var eagleBridge = L.circle([43.6863083, -116.34444], 50, {
-            color: 'black',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
+	_onMainMapMoving: function (e) {
+		this._aimingRect.setBounds(this._mainMap.getBounds());
+	},
 
-        eagleBridge.bindPopup("City of Eagle Bridge: Access to South Eagle Greenbelt Trails");
+	_onMiniMapMoveStarted:function (e) {
+		var lastAimingRect = this._aimingRect.getBounds();
+		var sw = this._miniMap.latLngToContainerPoint(lastAimingRect.getSouthWest());
+		var ne = this._miniMap.latLngToContainerPoint(lastAimingRect.getNorthEast());
+		this._lastAimingRectPosition = {sw:sw,ne:ne};
+	},
 
+	_onMiniMapMoving: function (e) {
+		if (!this._mainMapMoving && this._lastAimingRectPosition) {
+			this._shadowRect.setBounds(new L.LatLngBounds(this._miniMap.containerPointToLatLng(this._lastAimingRectPosition.sw),this._miniMap.containerPointToLatLng(this._lastAimingRectPosition.ne)));
+			this._shadowRect.setStyle({opacity:1,fillOpacity:0.3});
+		}
+	},
 
-        map.markerLayer.setGeoJSON(geoJson);
+	_onMiniMapMoved: function (e) {
+		if (!this._mainMapMoving) {
+			this._miniMapMoving = true;
+			this._mainMap.setView(this._miniMap.getCenter(), this._decideZoom(false));
+			this._shadowRect.setStyle({opacity:0,fillOpacity:0});
+		} else {
+			this._mainMapMoving = false;
+		}
+	},
 
-        map.markerLayer.on('click', function (e) {
-            e.layer.unbindPopup();
+	_decideZoom: function (fromMaintoMini) {
+		if (!this.options.zoomLevelFixed) {
+			if (fromMaintoMini)
+				return this._mainMap.getZoom() + this.options.zoomLevelOffset;
+			else {
+				var currentDiff = this._miniMap.getZoom() - this._mainMap.getZoom();
+				var proposedZoom = this._miniMap.getZoom() - this.options.zoomLevelOffset;
+				var toRet;
+				
+				if (currentDiff > this.options.zoomLevelOffset && this._mainMap.getZoom() < this._miniMap.getMinZoom() - this.options.zoomLevelOffset) {
+					//This means the miniMap is zoomed out to the minimum zoom level and can't zoom any more.
+					if (this._miniMap.getZoom() > this._lastMiniMapZoom) {
+						//This means the user is trying to zoom in by using the minimap, zoom the main map.
+						toRet = this._mainMap.getZoom() + 1;
+						//Also we cheat and zoom the minimap out again to keep it visually consistent.
+						this._miniMap.setZoom(this._miniMap.getZoom() -1);
+					} else {
+						//Either the user is trying to zoom out past the mini map's min zoom or has just panned using it, we can't tell the difference.
+						//Therefore, we ignore it!
+						toRet = this._mainMap.getZoom();
+					}
+				} else {
+					//This is what happens in the majority of cases, and always if you configure the min levels + offset in a sane fashion.
+					toRet = proposedZoom;
+				}
+				this._lastMiniMapZoom = this._miniMap.getZoom();
+				return toRet;
+			}
+		} else {
+			if (fromMaintoMini)
+				return this.options.zoomLevelFixed;
+			else
+				return this._mainMap.getZoom();
+		}
+	},
 
+	_decideMinimized: function () {
+		if (this._userToggledDisplay) {
+			return this._minimized;
+		}
 
-            var feature = e.layer.feature;
-            var info = '<h1>' + feature.properties.title + '</h1>' +
-                        '<p>' + feature.properties.description + '</p>';
-            
+		if (this.options.autoToggleDisplay) {
+			if (this._mainMap.getBounds().contains(this._miniMap.getBounds())) {
+				return true;
+			}
+			return false;
+		}
 
-            document.getElementById('info').innerHTML = info;
+		return this._minimized;
+	}
+});
 
+L.Map.mergeOptions({
+	miniMapControl: false
+});
 
-        });
+L.Map.addInitHook(function () {
+	if (this.options.miniMapControl) {
+		this.miniMapControl = (new L.Control.MiniMap()).addTo(this);
+	}
+});
 
-        map.on('click', function (e) {
-            document.getElementById('info').innerHTML = '';
-        });
-
-        map.markerLayer.on('click', function (e) {
-            map.panTo(e.layer.getLatLng());
-        });
-    
-</script>
-</body>
-</html>
+L.control.minimap = function (options) {
+	return new L.Control.MiniMap(options);
+};
